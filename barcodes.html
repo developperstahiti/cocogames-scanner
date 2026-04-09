@@ -80,21 +80,19 @@
         /* Barcode positioned over the dashed encart area */
         .barcode-overlay {
             position: absolute;
-            right: 0.8%;
-            top: 8%;
-            width: 14.5%;
-            height: 84%;
+            /* Center of the encart */
+            right: 1%;
+            top: 50%;
+            width: 14%;
+            height: 0;
             display: flex;
             align-items: center;
             justify-content: center;
+            /* Rotate the whole container */
+            transform: translateY(-50%) rotate(-90deg);
         }
         .barcode-overlay svg {
-            transform: rotate(-90deg);
-            /* After rotation, width becomes height and vice versa */
-            max-width: none;
-            max-height: none;
-            width: 250%;
-            height: auto;
+            display: block;
         }
 
         @media print {
