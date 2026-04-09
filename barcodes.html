@@ -58,7 +58,20 @@
             padding: 3mm 5mm;
             display: flex;
             flex-direction: column;
-            gap: 2mm;
+            gap: 0;
+        }
+
+        /* Zigzag separator between vouchers */
+        .zigzag {
+            width: 100%;
+            height: 6mm;
+            background:
+                linear-gradient(135deg, #1a7a3a 25%, transparent 25%) -5mm 0,
+                linear-gradient(225deg, #1a7a3a 25%, transparent 25%) -5mm 0,
+                linear-gradient(315deg, #1a7a3a 25%, transparent 25%),
+                linear-gradient(45deg, #1a7a3a 25%, transparent 25%);
+            background-size: 10mm 6mm;
+            background-color: #2d8f4e;
         }
 
         /* Voucher = image + barcode overlay */
@@ -197,9 +210,19 @@
                 var start = p * perPage;
                 var end = Math.min(start + perPage, count);
 
+                // First zigzag at top
+                var topZig = document.createElement('div');
+                topZig.className = 'zigzag';
+                page.appendChild(topZig);
+
                 for (var i = start; i < end; i++) {
                     var code = generateCode(prefix, type, i + 1);
                     page.appendChild(createVoucher(type, code));
+
+                    // Zigzag after each voucher
+                    var zig = document.createElement('div');
+                    zig.className = 'zigzag';
+                    page.appendChild(zig);
                 }
                 container.appendChild(page);
             }
