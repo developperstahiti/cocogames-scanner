@@ -115,7 +115,7 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6eW95a2pha2hvYmd0a2tkc3B2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3NTI0MjcsImV4cCI6MjA5MTMyODQyN30.MIeEX-Ow5E0hPiTc-cOPpHBYaVf4uBqwi1Hly92ji1E';
         // ============================================================
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const TABLE = 'tickets';
         const ONE_YEAR_MS = 365.25 * 24 * 60 * 60 * 1000;
         const statusEl = document.getElementById('db-status');
@@ -173,7 +173,7 @@
             const ticketType = getTicketType(code);
 
             try {
-                const { data: existing, error: fetchErr } = await supabase
+                const { data: existing, error: fetchErr } = await db
                     .from(TABLE)
                     .select('*')
                     .eq('code', code)
@@ -203,7 +203,7 @@
                             { text: 'Expir\u00e9 depuis ' + Math.abs(days) + ' jour' + p, bold: true }
                         ]);
                     } else {
-                        const { error: updateErr } = await supabase
+                        const { error: updateErr } = await db
                             .from(TABLE)
                             .update({ used: true, used_at: new Date().toISOString() })
                             .eq('id', existing.id);
@@ -217,7 +217,7 @@
                         ]);
                     }
                 } else {
-                    const { error: insertErr } = await supabase
+                    const { error: insertErr } = await db
                         .from(TABLE)
                         .insert({
                             code: code,
@@ -245,15 +245,15 @@
         }
 
         async function deleteEntry(id) {
-            await supabase.from(TABLE).delete().eq('id', id);
+            await db.from(TABLE).delete().eq('id', id);
         }
 
         async function clearAll() {
             if (!confirm('Supprimer tous les codes enregistr\u00e9s ?')) return;
-            const { data } = await supabase.from(TABLE).select('id');
+            const { data } = await db.from(TABLE).select('id');
             if (data && data.length > 0) {
                 const ids = data.map(r => r.id);
-                await supabase.from(TABLE).delete().in('id', ids);
+                await db.from(TABLE).delete().in('id', ids);
             }
             document.getElementById('result').style.display = 'none';
         }
@@ -294,7 +294,7 @@
         // Initial load + real-time sync
         async function init() {
             try {
-                const { data, error } = await supabase
+                const { data, error } = await db
                     .from(TABLE)
                     .select('*')
                     .order('registered_at', { ascending: false });
@@ -306,10 +306,10 @@
                 renderHistory(data);
 
                 // Real-time: listen for changes on all devices
-                supabase
+                db
                     .channel('tickets-realtime')
                     .on('postgres_changes', { event: '*', schema: 'public', table: TABLE }, async () => {
-                        const { data: fresh } = await supabase
+                        const { data: fresh } = await db
                             .from(TABLE)
                             .select('*')
                             .order('registered_at', { ascending: false });
