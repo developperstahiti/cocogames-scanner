@@ -83,6 +83,18 @@
             margin-top: 1.5rem; padding: 0.5rem 1.2rem; background: #334155;
             color: #94a3b8; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem;
         }
+        .btn-generate {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.6rem 1.5rem;
+            background: #059669;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .btn-generate:hover { background: #047857; }
         .btn-clear:hover { background: #475569; }
         .btn-delete {
             background: none; border: none; color: #64748b; cursor: pointer;
@@ -96,6 +108,7 @@
     <div id="db-status" class="db-status loading">Connexion...</div>
     <input type="text" id="scan-input" placeholder="Scannez un code-barres..." autofocus>
     <p class="hint">Le champ capture automatiquement la scannette</p>
+    <a href="barcodes.html" class="btn-generate">Generer des bons cadeaux</a>
 
     <div id="result"></div>
 
