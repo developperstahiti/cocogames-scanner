@@ -8,7 +8,7 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: #0f172a;
             color: #e2e8f0;
             padding: 2rem;
@@ -50,203 +50,46 @@
         .btn-back:hover { background: #475569; }
         .btn-row { display: flex; gap: 1rem; justify-content: center; margin-top: 0.5rem; }
 
-        /* Page */
+        /* Page A4 */
         .page {
             width: 210mm;
             margin: 1rem auto;
             background: white;
-            padding: 5mm 5mm;
+            padding: 3mm 5mm;
             display: flex;
             flex-direction: column;
-            gap: 3mm;
+            gap: 2mm;
         }
 
-        /* Voucher */
+        /* Voucher = image + barcode overlay */
         .voucher {
-            display: flex;
-            height: 68mm;
-            border: 4px solid #1a7a3a;
-            overflow: hidden;
+            position: relative;
+            width: 200mm;
+            /* ratio 2000:700 = 2.857:1 */
+            height: 70mm;
             page-break-inside: avoid;
-            position: relative;
+            overflow: hidden;
+        }
+        .voucher img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
         }
 
-        /* Zigzag top/bottom borders */
-        .voucher::before, .voucher::after {
-            content: '';
+        /* Barcode positioned over the dashed encart area */
+        .barcode-overlay {
             position: absolute;
-            left: 0; right: 0;
-            height: 6px;
-            background: repeating-linear-gradient(
-                90deg,
-                #1a7a3a 0px, #1a7a3a 8px,
-                #2d8f4e 8px, #2d8f4e 12px,
-                #1a7a3a 12px, #1a7a3a 16px,
-                transparent 16px, transparent 18px
-            );
-            z-index: 2;
-        }
-        .voucher::before { top: 0; }
-        .voucher::after { bottom: 0; }
-
-        /* Left section */
-        .voucher-left {
-            flex: 1;
-            padding: 10mm 5mm 5mm 5mm;
-            position: relative;
-            background: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        /* Decorative corner leaves (CSS approximation) */
-        .leaf-tl, .leaf-tr, .leaf-bl {
-            position: absolute;
-            width: 28mm;
-            height: 22mm;
-            z-index: 1;
-        }
-        .leaf-tl {
-            top: 4px; left: 0;
-            background: radial-gradient(ellipse at 0% 0%, rgba(26,122,58,0.35) 0%, rgba(26,122,58,0.1) 40%, transparent 70%);
-        }
-        .leaf-tr {
-            top: 4px; right: 0;
-            background: radial-gradient(ellipse at 100% 0%, rgba(26,122,58,0.2) 0%, transparent 60%);
-        }
-        .leaf-bl {
-            bottom: 4px; left: 0;
-            background: radial-gradient(ellipse at 0% 100%, rgba(26,122,58,0.25) 0%, transparent 60%);
-        }
-
-        .org-name {
-            text-align: center;
-            font-size: 7.5pt;
-            font-weight: 800;
-            color: #1a5c2e;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            line-height: 1.3;
-            position: relative;
-            z-index: 2;
-        }
-
-        .bon-center {
-            text-align: center;
-            position: relative;
-            z-index: 2;
-        }
-        .bon-center .prefix {
-            font-size: 18pt;
-            font-weight: 800;
-            color: #111;
-        }
-        .bon-center .value {
-            font-size: 36pt;
-            font-weight: 900;
-            color: #111;
-            line-height: 0.95;
-        }
-        .bon-center .sub {
-            font-size: 18pt;
-            font-weight: 800;
-            color: #111;
-        }
-
-        .signatures {
-            position: absolute;
-            left: 4mm;
-            top: 14mm;
-            z-index: 2;
-            font-size: 5.5pt;
-            color: #333;
-        }
-        .sig-block { margin-bottom: 2mm; }
-        .sig-block .sig-title { font-size: 5.5pt; }
-        .sig-block .sig-name {
-            font-family: 'Georgia', 'Times New Roman', serif;
-            font-style: italic;
-            font-size: 10pt;
-            color: #1a5c2e;
-        }
-
-        .footer-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            position: relative;
-            z-index: 2;
-            padding-top: 1mm;
-            border-top: 1px solid #d4e8da;
-        }
-        .sms-block {
-            font-size: 6pt;
-            color: #333;
-        }
-        .sms-block .sms-label {
-            font-size: 5.5pt;
-            font-weight: 400;
-        }
-        .sms-block .sms-number {
-            font-size: 12pt;
-            font-weight: 800;
-            color: #111;
-        }
-        .hours-block {
-            text-align: center;
-            font-size: 6pt;
-            color: #333;
-            line-height: 1.4;
-        }
-        .hours-block b { color: #1a7a3a; font-size: 7pt; }
-        .hours-block .sep { margin: 0 1mm; color: #1a7a3a; font-weight: 700; }
-        .location-block {
-            text-align: right;
-            font-weight: 800;
-            color: #1a7a3a;
-            font-size: 8pt;
-            line-height: 1.3;
-        }
-
-        /* Right section — COCO GAMES + barcode */
-        .voucher-right {
-            width: 58mm;
-            display: flex;
-            flex-direction: row;
-            border-left: 3px solid #1a7a3a;
-        }
-
-        /* COCO GAMES vertical band */
-        .coco-band {
-            width: 14mm;
-            background: linear-gradient(180deg, #e8e8e8 0%, #f5f5f5 50%, #e8e8e8 100%);
+            /* Encart is roughly the right 14% of the image, with some padding */
+            right: 1.5%;
+            top: 12%;
+            width: 13%;
+            height: 76%;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-right: 1px solid #ddd;
         }
-        .coco-text {
-            writing-mode: vertical-rl;
-            text-orientation: mixed;
-            font-size: 18pt;
-            font-weight: 900;
-            color: #1a7a3a;
-            letter-spacing: 4px;
-        }
-
-        /* Barcode encart */
-        .barcode-encart {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 3mm;
-            margin: 4mm;
-            border: 2.5px dashed #444;
-            border-radius: 8px;
-        }
-        .barcode-encart svg {
+        .barcode-overlay svg {
             max-width: 100%;
             max-height: 100%;
         }
@@ -256,7 +99,7 @@
             .controls, h1, .subtitle { display: none !important; }
             .page {
                 margin: 0 auto;
-                padding: 3mm 5mm;
+                padding: 2mm 5mm;
                 box-shadow: none;
                 border-radius: 0;
                 page-break-after: always;
@@ -267,7 +110,7 @@
 </head>
 <body>
     <h1>Bons Cadeaux Coco Games</h1>
-    <p class="subtitle">Bons complets avec codes-barres, prets a imprimer</p>
+    <p class="subtitle">Vos bons avec codes-barres, prets a imprimer</p>
 
     <div class="controls">
         <div class="row">
@@ -295,6 +138,11 @@
     <div id="pages"></div>
 
     <script>
+        var IMAGES = {
+            '1H': 'bon-1h.png',
+            'CHG': 'bon-chargeur.png'
+        };
+
         function generateCode(prefix, type, index) {
             var random = Math.random().toString(36).substring(2, 6).toUpperCase();
             var num = String(index).padStart(3, '0');
@@ -302,133 +150,33 @@
         }
 
         function createVoucher(type, code) {
-            var bonValue, bonSub;
-            if (type === '1H') {
-                bonValue = '1 H';
-                bonSub = '1 personne';
-            } else {
-                bonValue = '1';
-                bonSub = 'chargeur';
-            }
+            var voucher = document.createElement('div');
+            voucher.className = 'voucher';
 
-            var v = document.createElement('div');
-            v.className = 'voucher';
+            var img = document.createElement('img');
+            img.src = IMAGES[type];
+            img.alt = 'Bon cadeau Coco Games';
+            voucher.appendChild(img);
 
-            // Left
-            var left = document.createElement('div');
-            left.className = 'voucher-left';
-
-            // Decorative corners
-            var ltl = document.createElement('div'); ltl.className = 'leaf-tl'; left.appendChild(ltl);
-            var ltr = document.createElement('div'); ltr.className = 'leaf-tr'; left.appendChild(ltr);
-            var lbl = document.createElement('div'); lbl.className = 'leaf-bl'; left.appendChild(lbl);
-
-            // Org name
-            var org = document.createElement('div');
-            org.className = 'org-name';
-            org.appendChild(document.createTextNode('Institut du Divertissement'));
-            org.appendChild(document.createElement('br'));
-            org.appendChild(document.createTextNode('d\'Outre-Mer'));
-            left.appendChild(org);
-
-            // Bon center
-            var center = document.createElement('div');
-            center.className = 'bon-center';
-            var pfx = document.createElement('div');
-            pfx.className = 'prefix';
-            pfx.textContent = 'Bon de';
-            center.appendChild(pfx);
-            var val = document.createElement('div');
-            val.className = 'value';
-            val.textContent = bonValue;
-            center.appendChild(val);
-            var sub = document.createElement('div');
-            sub.className = 'sub';
-            sub.textContent = bonSub;
-            center.appendChild(sub);
-            left.appendChild(center);
-
-            // Signatures
-            var sigs = document.createElement('div');
-            sigs.className = 'signatures';
-            var s1 = document.createElement('div'); s1.className = 'sig-block';
-            var s1t = document.createElement('div'); s1t.className = 'sig-title'; s1t.textContent = 'Le Pr\u00e9sident du Divertissement';
-            var s1n = document.createElement('div'); s1n.className = 'sig-name'; s1n.textContent = 'T.Vallet';
-            s1.appendChild(s1t); s1.appendChild(s1n); sigs.appendChild(s1);
-            var s2 = document.createElement('div'); s2.className = 'sig-block';
-            var s2t = document.createElement('div'); s2t.className = 'sig-title'; s2t.textContent = 'La directrice g\u00e9n\u00e9rale';
-            var s2n = document.createElement('div'); s2n.className = 'sig-name'; s2n.textContent = 'A.D.';
-            s2.appendChild(s2t); s2.appendChild(s2n); sigs.appendChild(s2);
-            left.appendChild(sigs);
-
-            // Footer
-            var footer = document.createElement('div');
-            footer.className = 'footer-bar';
-
-            var sms = document.createElement('div'); sms.className = 'sms-block';
-            var smsL = document.createElement('span'); smsL.className = 'sms-label'; smsL.textContent = 'SMS  ';
-            var smsN = document.createElement('span'); smsN.className = 'sms-number'; smsN.textContent = '89 61 06 13';
-            sms.appendChild(smsL); sms.appendChild(smsN);
-            footer.appendChild(sms);
-
-            var hours = document.createElement('div'); hours.className = 'hours-block';
-            var hLine1 = document.createElement('div');
-            var bV = document.createElement('b'); bV.textContent = 'Vacances';
-            hLine1.appendChild(bV);
-            var sep = document.createElement('span'); sep.className = 'sep'; sep.textContent = '|';
-            hLine1.appendChild(document.createTextNode(' 8h-18h '));
-            hLine1.appendChild(sep);
-            var bE = document.createElement('b'); bE.textContent = ' Ecole';
-            hLine1.appendChild(bE);
-            hLine1.appendChild(document.createTextNode(' 10h-18h'));
-            hours.appendChild(hLine1);
-            var hLine2 = document.createElement('div');
-            hLine2.textContent = 'Samedi 8h-12h';
-            hours.appendChild(hLine2);
-            footer.appendChild(hours);
-
-            var loc = document.createElement('div'); loc.className = 'location-block';
-            var loc1 = document.createElement('div'); loc1.textContent = 'Coco Games - Arue';
-            var loc2 = document.createElement('div'); loc2.textContent = '1000fr de l\'heure';
-            loc.appendChild(loc1); loc.appendChild(loc2);
-            footer.appendChild(loc);
-
-            left.appendChild(footer);
-            v.appendChild(left);
-
-            // Right
-            var right = document.createElement('div');
-            right.className = 'voucher-right';
-
-            var band = document.createElement('div');
-            band.className = 'coco-band';
-            var cocoText = document.createElement('div');
-            cocoText.className = 'coco-text';
-            cocoText.textContent = 'COCO GAMES';
-            band.appendChild(cocoText);
-            right.appendChild(band);
-
-            var encart = document.createElement('div');
-            encart.className = 'barcode-encart';
+            var overlay = document.createElement('div');
+            overlay.className = 'barcode-overlay';
             var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            encart.appendChild(svg);
-            right.appendChild(encart);
-
-            v.appendChild(right);
+            overlay.appendChild(svg);
+            voucher.appendChild(overlay);
 
             JsBarcode(svg, code, {
                 format: 'CODE128',
-                width: 1.3,
-                height: 45,
+                width: 1.2,
+                height: 50,
                 displayValue: true,
-                fontSize: 9,
+                fontSize: 10,
                 font: 'monospace',
                 margin: 2,
                 background: 'transparent',
                 lineColor: '#000000'
             });
 
-            return v;
+            return voucher;
         }
 
         function generate() {
@@ -452,7 +200,6 @@
                     var code = generateCode(prefix, type, i + 1);
                     page.appendChild(createVoucher(type, code));
                 }
-
                 container.appendChild(page);
             }
         }
