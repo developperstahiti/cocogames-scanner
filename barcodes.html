@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Codes-barres Bons Cadeaux — Coco Games</title>
+    <title>Bons Cadeaux — Coco Games</title>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: #0f172a;
@@ -15,6 +16,7 @@
         }
         h1 { font-size: 1.4rem; color: #94a3b8; margin-bottom: 1rem; text-align: center; }
 
+        /* Controls */
         .controls {
             max-width: 600px;
             margin: 0 auto 2rem;
@@ -47,56 +49,155 @@
         .btn-print:hover { background: #047857; }
         .btn-row { display: flex; gap: 1rem; justify-content: center; margin-top: 0.5rem; }
 
-        .preview {
-            max-width: 800px;
-            margin: 0 auto;
+        /* Voucher page */
+        .page {
+            width: 210mm;
+            margin: 1rem auto;
             background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            display: none;
-        }
-        .preview h2 {
-            font-size: 1rem;
-            color: #374151;
-            margin-bottom: 1rem;
-            text-align: center;
+            border-radius: 8px;
+            padding: 5mm;
+            display: flex;
+            flex-direction: column;
+            gap: 4mm;
         }
 
-        .barcode-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.5rem;
-        }
-        .barcode-card {
-            border: 2px dashed #d1d5db;
-            border-radius: 8px;
-            padding: 0.75rem;
-            text-align: center;
+        /* Single voucher */
+        .voucher {
+            display: flex;
+            border: 3px solid #1a7a3a;
+            border-radius: 6px;
+            overflow: hidden;
+            height: 62mm;
             page-break-inside: avoid;
         }
-        .barcode-card .type {
-            font-size: 0.7rem;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.25rem;
+
+        /* Left part — ticket info */
+        .voucher-left {
+            flex: 1;
+            background: linear-gradient(135deg, #f0faf3 0%, #ffffff 100%);
+            padding: 4mm 5mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-right: 2px solid #1a7a3a;
+            position: relative;
         }
-        .barcode-card svg { max-width: 100%; }
+        .voucher-left::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border: 2px solid rgba(26, 122, 58, 0.15);
+            border-radius: 4px;
+            margin: 2mm;
+            pointer-events: none;
+        }
+
+        .org-name {
+            font-size: 7pt;
+            text-align: center;
+            color: #1a5c2e;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1.3;
+        }
+
+        .bon-label {
+            text-align: center;
+            color: #111;
+        }
+        .bon-label .prefix {
+            font-size: 16pt;
+            font-weight: 700;
+        }
+        .bon-label .value {
+            font-size: 28pt;
+            font-weight: 900;
+            line-height: 1;
+        }
+        .bon-label .subtitle {
+            font-size: 14pt;
+            font-weight: 700;
+        }
+
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            font-size: 5.5pt;
+            color: #333;
+        }
+        .sig { text-align: center; }
+        .sig .name { font-style: italic; font-family: 'Georgia', serif; font-size: 8pt; color: #1a5c2e; }
+
+        .footer-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            font-size: 6pt;
+            color: #333;
+            border-top: 1px solid #cde6d3;
+            padding-top: 2mm;
+        }
+        .sms { font-size: 9pt; font-weight: 700; }
+        .sms span { font-size: 6pt; font-weight: 400; vertical-align: middle; margin-right: 1mm; }
+        .horaires { text-align: center; font-size: 5.5pt; line-height: 1.4; }
+        .horaires b { color: #1a7a3a; }
+        .location { text-align: right; font-weight: 700; color: #1a7a3a; font-size: 7pt; line-height: 1.4; }
+
+        /* Right part — barcode encart */
+        .voucher-right {
+            width: 52mm;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3mm;
+            position: relative;
+            border-left: 2px dashed #1a7a3a;
+        }
+
+        .coco-title {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            font-size: 18pt;
+            font-weight: 900;
+            color: #1a7a3a;
+            letter-spacing: 3px;
+            position: absolute;
+            right: 3mm;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.15;
+        }
+
+        .barcode-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+        .barcode-area svg {
+            max-width: 45mm;
+        }
 
         @media print {
-            body { background: white; padding: 1rem; }
-            .controls, h1 { display: none; }
-            .preview {
-                display: block !important;
+            body { background: white; padding: 0; margin: 0; }
+            .controls, h1 { display: none !important; }
+            .page {
+                border-radius: 0;
                 box-shadow: none;
-                padding: 0;
+                margin: 0 auto;
+                padding: 5mm;
+                page-break-after: always;
             }
-            .barcode-card { border: 1px dashed #ccc; break-inside: avoid; }
+            .page:last-child { page-break-after: auto; }
         }
     </style>
 </head>
 <body>
-    <h1>Generateur de codes-barres — Bons Cadeaux Coco Games</h1>
+    <h1>Bons Cadeaux Coco Games</h1>
 
     <div class="controls">
         <div class="row">
@@ -107,74 +208,183 @@
             </select>
         </div>
         <div class="row">
-            <label>Nombre de codes :</label>
-            <input type="number" id="count" value="4" min="1" max="50">
+            <label>Nombre de bons :</label>
+            <input type="number" id="count" value="4" min="1" max="100">
         </div>
         <div class="row">
-            <label>Prefixe (optionnel) :</label>
-            <input type="text" id="prefix" placeholder="ex: CG" value="CG">
+            <label>Prefixe :</label>
+            <input type="text" id="prefix" value="CG" placeholder="ex: CG">
         </div>
         <div class="btn-row">
-            <button class="btn btn-primary" onclick="generate()">Generer</button>
+            <button class="btn btn-primary" onclick="generate()">Generer les bons</button>
             <button class="btn btn-print" onclick="window.print()">Imprimer</button>
         </div>
     </div>
 
-    <div class="preview" id="preview">
-        <h2 id="preview-title"></h2>
-        <div class="barcode-grid" id="barcode-grid"></div>
-    </div>
+    <div id="pages"></div>
 
     <script>
-        function generateUniqueCode(prefix, type, index) {
-            const timestamp = Date.now().toString(36).toUpperCase();
-            const random = Math.random().toString(36).substring(2, 5).toUpperCase();
-            const num = String(index).padStart(3, '0');
+        function generateCode(prefix, type, index) {
+            var random = Math.random().toString(36).substring(2, 6).toUpperCase();
+            var num = String(index).padStart(3, '0');
             return prefix + '-' + type + '-' + num + '-' + random;
         }
 
         function generate() {
-            const type = document.getElementById('bon-type').value;
-            const count = parseInt(document.getElementById('count').value) || 4;
-            const prefix = document.getElementById('prefix').value.trim() || 'CG';
-            const typeLabel = type === '1H' ? 'Bon de 1H — 1 personne' : 'Bon de 1 chargeur';
+            var type = document.getElementById('bon-type').value;
+            var count = parseInt(document.getElementById('count').value) || 4;
+            var prefix = document.getElementById('prefix').value.trim() || 'CG';
+            var pagesContainer = document.getElementById('pages');
+            pagesContainer.textContent = '';
 
-            const preview = document.getElementById('preview');
-            const grid = document.getElementById('barcode-grid');
-            const title = document.getElementById('preview-title');
+            var bonTitle, bonValue, bonSubtitle;
+            if (type === '1H') {
+                bonTitle = 'Bon de';
+                bonValue = '1 H';
+                bonSubtitle = '1 personne';
+            } else {
+                bonTitle = 'Bon de';
+                bonValue = '1';
+                bonSubtitle = 'chargeur';
+            }
 
-            preview.style.display = 'block';
-            title.textContent = typeLabel + ' — ' + count + ' code(s)';
-            grid.textContent = '';
+            var vouchersPerPage = 4;
+            var totalPages = Math.ceil(count / vouchersPerPage);
 
-            for (let i = 1; i <= count; i++) {
-                const code = generateUniqueCode(prefix, type, i);
+            for (var p = 0; p < totalPages; p++) {
+                var page = document.createElement('div');
+                page.className = 'page';
 
-                const card = document.createElement('div');
-                card.className = 'barcode-card';
+                var start = p * vouchersPerPage;
+                var end = Math.min(start + vouchersPerPage, count);
 
-                const typeDiv = document.createElement('div');
-                typeDiv.className = 'type';
-                typeDiv.textContent = typeLabel;
-                card.appendChild(typeDiv);
+                for (var i = start; i < end; i++) {
+                    var code = generateCode(prefix, type, i + 1);
+                    var voucher = document.createElement('div');
+                    voucher.className = 'voucher';
 
-                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                svg.id = 'barcode-' + i;
-                card.appendChild(svg);
+                    // Left side
+                    var left = document.createElement('div');
+                    left.className = 'voucher-left';
 
-                grid.appendChild(card);
+                    var orgName = document.createElement('div');
+                    orgName.className = 'org-name';
+                    orgName.textContent = 'Institut du Divertissement d\'Outre-Mer';
+                    left.appendChild(orgName);
 
-                JsBarcode(svg, code, {
-                    format: 'CODE128',
-                    width: 1.5,
-                    height: 60,
-                    displayValue: true,
-                    fontSize: 12,
-                    font: 'monospace',
-                    margin: 5,
-                    background: '#ffffff',
-                    lineColor: '#000000'
-                });
+                    var bonLabel = document.createElement('div');
+                    bonLabel.className = 'bon-label';
+                    var pfx = document.createElement('div');
+                    pfx.className = 'prefix';
+                    pfx.textContent = bonTitle;
+                    bonLabel.appendChild(pfx);
+                    var val = document.createElement('div');
+                    val.className = 'value';
+                    val.textContent = bonValue;
+                    bonLabel.appendChild(val);
+                    var sub = document.createElement('div');
+                    sub.className = 'subtitle';
+                    sub.textContent = bonSubtitle;
+                    bonLabel.appendChild(sub);
+                    left.appendChild(bonLabel);
+
+                    var sigs = document.createElement('div');
+                    sigs.className = 'signatures';
+                    var sig1 = document.createElement('div');
+                    sig1.className = 'sig';
+                    var s1label = document.createElement('div');
+                    s1label.textContent = 'Le President du Divertissement';
+                    sig1.appendChild(s1label);
+                    var s1name = document.createElement('div');
+                    s1name.className = 'name';
+                    s1name.textContent = 'T.Vallet';
+                    sig1.appendChild(s1name);
+                    sigs.appendChild(sig1);
+                    var sig2 = document.createElement('div');
+                    sig2.className = 'sig';
+                    var s2label = document.createElement('div');
+                    s2label.textContent = 'La directrice generale';
+                    sig2.appendChild(s2label);
+                    var s2name = document.createElement('div');
+                    s2name.className = 'name';
+                    s2name.textContent = 'A.D.';
+                    sig2.appendChild(s2name);
+                    sigs.appendChild(sig2);
+                    left.appendChild(sigs);
+
+                    var footer = document.createElement('div');
+                    footer.className = 'footer-info';
+
+                    var smsDiv = document.createElement('div');
+                    var smsLabel = document.createElement('span');
+                    smsLabel.textContent = 'SMS';
+                    smsDiv.className = 'sms';
+                    smsDiv.appendChild(smsLabel);
+                    smsDiv.appendChild(document.createTextNode(' 89 61 06 13'));
+                    footer.appendChild(smsDiv);
+
+                    var horaires = document.createElement('div');
+                    horaires.className = 'horaires';
+                    var hLine1 = document.createElement('div');
+                    var bVac = document.createElement('b');
+                    bVac.textContent = 'Vacances';
+                    hLine1.appendChild(bVac);
+                    hLine1.appendChild(document.createTextNode(' 8h-18h | '));
+                    var bEcole = document.createElement('b');
+                    bEcole.textContent = 'Ecole';
+                    hLine1.appendChild(bEcole);
+                    hLine1.appendChild(document.createTextNode(' 10h-18h'));
+                    horaires.appendChild(hLine1);
+                    var hLine2 = document.createElement('div');
+                    hLine2.textContent = 'Samedi 8h-12h';
+                    horaires.appendChild(hLine2);
+                    footer.appendChild(horaires);
+
+                    var loc = document.createElement('div');
+                    loc.className = 'location';
+                    var locLine1 = document.createElement('div');
+                    locLine1.textContent = 'Coco Games - Arue';
+                    loc.appendChild(locLine1);
+                    var locLine2 = document.createElement('div');
+                    locLine2.textContent = '1000fr de l\'heure';
+                    loc.appendChild(locLine2);
+                    footer.appendChild(loc);
+
+                    left.appendChild(footer);
+                    voucher.appendChild(left);
+
+                    // Right side — barcode encart
+                    var right = document.createElement('div');
+                    right.className = 'voucher-right';
+
+                    var cocoTitle = document.createElement('div');
+                    cocoTitle.className = 'coco-title';
+                    cocoTitle.textContent = 'COCO GAMES';
+                    right.appendChild(cocoTitle);
+
+                    var barcodeArea = document.createElement('div');
+                    barcodeArea.className = 'barcode-area';
+                    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    barcodeArea.appendChild(svg);
+                    right.appendChild(barcodeArea);
+
+                    voucher.appendChild(right);
+                    page.appendChild(voucher);
+
+                    JsBarcode(svg, code, {
+                        format: 'CODE128',
+                        width: 1.2,
+                        height: 45,
+                        displayValue: true,
+                        fontSize: 9,
+                        font: 'monospace',
+                        margin: 2,
+                        background: 'transparent',
+                        lineColor: '#000000'
+                    });
+                }
+
+                pagesContainer.appendChild(page);
             }
         }
 
