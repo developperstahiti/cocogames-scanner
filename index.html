@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coco Games — Scanner Bons Cadeaux</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+        h1 { font-size: 1.5rem; margin-bottom: 0.5rem; color: #94a3b8; }
+        .db-status {
+            font-size: 0.75rem;
+            margin-bottom: 1rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+        }
+        .db-status.online { background: #064e3b; color: #34d399; }
+        .db-status.offline { background: #7f1d1d; color: #fca5a5; }
+        .db-status.loading { background: #1e3a5f; color: #93c5fd; }
+        #scan-input {
+            width: 100%;
+            max-width: 500px;
+            padding: 1rem;
+            font-size: 1.2rem;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            background: #1e293b;
+            color: #f1f5f9;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        #scan-input:focus { border-color: #3b82f6; }
+        #result {
+            margin-top: 2rem;
+            padding: 2rem;
+            border-radius: 16px;
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        #result.valid { background: #064e3b; border: 2px solid #10b981; }
+        #result.used { background: #78350f; border: 2px solid #f59e0b; }
+        #result.expired { background: #7f1d1d; border: 2px solid #ef4444; }
+        #result.new { background: #1e3a5f; border: 2px solid #3b82f6; }
+        #result.error { background: #4a1d1d; border: 2px solid #b91c1c; }
+        #result .status { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+        #result .details { font-size: 0.95rem; color: #cbd5e1; line-height: 1.6; }
+        #result .barcode-id { font-family: monospace; font-size: 1.1rem; color: #fbbf24; margin-bottom: 1rem; display: block; }
+        #history { margin-top: 2rem; width: 100%; max-width: 500px; }
+        #history h2 { font-size: 1rem; color: #64748b; margin-bottom: 0.75rem; }
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: #1e293b;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+        .history-item .code { font-family: monospace; color: #fbbf24; font-size: 0.75rem; }
+        .history-item .type-label { color: #94a3b8; font-size: 0.7rem; display: block; }
+        .badge { padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge.v { background: #064e3b; color: #34d399; }
+        .badge.u { background: #78350f; color: #fcd34d; }
+        .badge.e { background: #7f1d1d; color: #fca5a5; }
+        .hint { color: #475569; font-size: 0.85rem; margin-top: 0.75rem; text-align: center; }
+        .btn-clear {
+            margin-top: 1.5rem; padding: 0.5rem 1.2rem; background: #334155;
+            color: #94a3b8; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem;
+        }
+        .btn-clear:hover { background: #475569; }
+        .btn-delete {
+            background: none; border: none; color: #64748b; cursor: pointer;
+            font-size: 1rem; padding: 0 0.4rem; margin-left: 0.5rem;
+        }
+        .btn-delete:hover { color: #ef4444; }
+    </style>
+</head>
+<body>
+    <h1>Coco Games — Scanner Bons Cadeaux</h1>
+    <div id="db-status" class="db-status loading">Connexion...</div>
+    <input type="text" id="scan-input" placeholder="Scannez un code-barres..." autofocus>
+    <p class="hint">Le champ capture automatiquement la scannette</p>
+
+    <div id="result"></div>
+
+    <div id="history">
+        <h2>Historique des codes</h2>
+        <div id="history-list"></div>
+    </div>
+
+    <button class="btn-clear" onclick="clearAll()">Tout effacer</button>
+
+    <script>
+        // ============================================================
+        // CONFIGURATION SUPABASE — A REMPLIR AVEC VOS VALEURS
+        // Voir: https://supabase.com > votre projet > Settings > API
+        // ============================================================
+        const SUPABASE_URL = 'https://VOTRE_PROJET.supabase.co';
+        const SUPABASE_ANON_KEY = 'VOTRE_ANON_KEY';
+        // ============================================================
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const TABLE = 'tickets';
+        const ONE_YEAR_MS = 365.25 * 24 * 60 * 60 * 1000;
+        const statusEl = document.getElementById('db-status');
+
+        function formatDate(ts) {
+            return new Date(ts).toLocaleDateString('fr-FR', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        function daysRemaining(expiresAt) {
+            return Math.ceil((expiresAt - Date.now()) / (24 * 60 * 60 * 1000));
+        }
+
+        function getTicketType(code) {
+            if (code.includes('-1H-')) return 'Bon de 1H \u2014 1 personne';
+            if (code.includes('-CHG-')) return 'Bon de 1 chargeur';
+            return 'Ticket';
+        }
+
+        function el(tag, attrs, children) {
+            const node = document.createElement(tag);
+            if (attrs) Object.entries(attrs).forEach(([k, v]) => {
+                if (k === 'className') node.className = v;
+                else if (k === 'textContent') node.textContent = v;
+                else node.setAttribute(k, v);
+            });
+            if (children) children.forEach(c => {
+                if (typeof c === 'string') node.appendChild(document.createTextNode(c));
+                else node.appendChild(c);
+            });
+            return node;
+        }
+
+        function buildResult(code, statusText, statusClass, lines) {
+            const r = document.getElementById('result');
+            r.className = statusClass;
+            r.textContent = '';
+            r.style.display = 'block';
+            r.appendChild(el('span', { className: 'barcode-id', textContent: code }));
+            r.appendChild(el('div', { className: 'status', textContent: statusText }));
+            const d = el('div', { className: 'details' });
+            lines.forEach((line, i) => {
+                if (i > 0) d.appendChild(document.createElement('br'));
+                if (line.bold) d.appendChild(el('strong', { textContent: line.text }));
+                else d.appendChild(document.createTextNode(line.text));
+            });
+            r.appendChild(d);
+        }
+
+        async function processCode(code) {
+            code = code.trim();
+            if (!code) return;
+            const ticketType = getTicketType(code);
+
+            try {
+                const { data: existing, error: fetchErr } = await supabase
+                    .from(TABLE)
+                    .select('*')
+                    .eq('code', code)
+                    .maybeSingle();
+
+                if (fetchErr) throw fetchErr;
+
+                if (existing) {
+                    const registeredAt = new Date(existing.registered_at).getTime();
+                    const expiresAt = registeredAt + ONE_YEAR_MS;
+                    const isExpired = Date.now() >= expiresAt;
+                    const days = daysRemaining(expiresAt);
+                    const p = Math.abs(days) > 1 ? 's' : '';
+
+                    if (existing.used) {
+                        buildResult(code, 'D\u00c9J\u00c0 UTILIS\u00c9', 'used', [
+                            { text: ticketType, bold: true },
+                            { text: 'Enregistr\u00e9 le : ' + formatDate(registeredAt) },
+                            { text: 'Utilis\u00e9 le : ' + formatDate(new Date(existing.used_at).getTime()) },
+                            { text: 'Ce ticket a d\u00e9j\u00e0 \u00e9t\u00e9 utilis\u00e9', bold: true }
+                        ]);
+                    } else if (isExpired) {
+                        buildResult(code, 'EXPIR\u00c9', 'expired', [
+                            { text: ticketType, bold: true },
+                            { text: 'Enregistr\u00e9 le : ' + formatDate(registeredAt) },
+                            { text: 'Expir\u00e9 depuis le : ' + formatDate(expiresAt) },
+                            { text: 'Expir\u00e9 depuis ' + Math.abs(days) + ' jour' + p, bold: true }
+                        ]);
+                    } else {
+                        const { error: updateErr } = await supabase
+                            .from(TABLE)
+                            .update({ used: true, used_at: new Date().toISOString() })
+                            .eq('id', existing.id);
+                        if (updateErr) throw updateErr;
+
+                        buildResult(code, 'VALID\u00c9 \u2014 TICKET UTILIS\u00c9', 'valid', [
+                            { text: ticketType, bold: true },
+                            { text: 'Enregistr\u00e9 le : ' + formatDate(registeredAt) },
+                            { text: 'Utilis\u00e9 maintenant : ' + formatDate(Date.now()) },
+                            { text: 'Ticket consomm\u00e9 avec succ\u00e8s', bold: true }
+                        ]);
+                    }
+                } else {
+                    const { error: insertErr } = await supabase
+                        .from(TABLE)
+                        .insert({
+                            code: code,
+                            type: ticketType,
+                            registered_at: new Date().toISOString(),
+                            used: false,
+                            used_at: null
+                        });
+                    if (insertErr) throw insertErr;
+
+                    buildResult(code, 'NOUVEAU \u2014 ENREGISTR\u00c9', 'new', [
+                        { text: ticketType, bold: true },
+                        { text: 'Enregistr\u00e9 le : ' + formatDate(Date.now()) },
+                        { text: 'Valide jusqu\'au : ' + formatDate(Date.now() + ONE_YEAR_MS) },
+                        { text: 'Ticket pr\u00eat \u00e0 \u00eatre utilis\u00e9 (1 utilisation)', bold: true }
+                    ]);
+                }
+            } catch (err) {
+                buildResult(code, 'ERREUR', 'error', [
+                    { text: 'Impossible de contacter la base de donn\u00e9es', bold: true },
+                    { text: 'V\u00e9rifiez la connexion internet' }
+                ]);
+                console.error(err);
+            }
+        }
+
+        async function deleteEntry(id) {
+            await supabase.from(TABLE).delete().eq('id', id);
+        }
+
+        async function clearAll() {
+            if (!confirm('Supprimer tous les codes enregistr\u00e9s ?')) return;
+            const { data } = await supabase.from(TABLE).select('id');
+            if (data && data.length > 0) {
+                const ids = data.map(r => r.id);
+                await supabase.from(TABLE).delete().in('id', ids);
+            }
+            document.getElementById('result').style.display = 'none';
+        }
+
+        function renderHistory(entries) {
+            const list = document.getElementById('history-list');
+            list.textContent = '';
+            if (!entries || entries.length === 0) {
+                list.appendChild(el('p', { textContent: 'Aucun code enregistr\u00e9', style: 'color:#475569;font-size:0.85rem' }));
+                return;
+            }
+            entries.forEach(entry => {
+                const registeredAt = new Date(entry.registered_at).getTime();
+                const expiresAt = registeredAt + ONE_YEAR_MS;
+                const isExpired = Date.now() >= expiresAt;
+                const days = daysRemaining(expiresAt);
+                let label, cls;
+                if (entry.used) { label = 'Utilis\u00e9'; cls = 'u'; }
+                else if (isExpired) { label = 'Expir\u00e9'; cls = 'e'; }
+                else { label = days + 'j'; cls = 'v'; }
+
+                const item = el('div', { className: 'history-item' });
+                const left = el('span');
+                left.appendChild(el('span', { className: 'code', textContent: entry.code }));
+                left.appendChild(el('span', { className: 'type-label', textContent: entry.type || '' }));
+                item.appendChild(left);
+
+                const right = el('span');
+                right.appendChild(el('span', { className: 'badge ' + cls, textContent: label }));
+                const delBtn = el('button', { className: 'btn-delete', title: 'Supprimer', textContent: '\u00d7' });
+                delBtn.addEventListener('click', () => deleteEntry(entry.id));
+                right.appendChild(delBtn);
+                item.appendChild(right);
+                list.appendChild(item);
+            });
+        }
+
+        // Initial load + real-time sync
+        async function init() {
+            try {
+                const { data, error } = await supabase
+                    .from(TABLE)
+                    .select('*')
+                    .order('registered_at', { ascending: false });
+
+                if (error) throw error;
+
+                statusEl.textContent = 'Base de donn\u00e9es connect\u00e9e';
+                statusEl.className = 'db-status online';
+                renderHistory(data);
+
+                // Real-time: listen for changes on all devices
+                supabase
+                    .channel('tickets-realtime')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: TABLE }, async () => {
+                        const { data: fresh } = await supabase
+                            .from(TABLE)
+                            .select('*')
+                            .order('registered_at', { ascending: false });
+                        renderHistory(fresh);
+                    })
+                    .subscribe();
+
+            } catch (err) {
+                statusEl.textContent = 'Hors ligne';
+                statusEl.className = 'db-status offline';
+                console.error(err);
+            }
+        }
+
+        init();
+
+        // Scanner input
+        const input = document.getElementById('scan-input');
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                processCode(input.value);
+                input.value = '';
+            }
+        });
+        document.addEventListener('click', () => input.focus());
+        window.addEventListener('blur', () => setTimeout(() => input.focus(), 100));
+    </script>
+</body>
+</html>

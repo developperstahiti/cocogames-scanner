@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codes-barres Bons Cadeaux — Coco Games</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 2rem;
+        }
+        h1 { font-size: 1.4rem; color: #94a3b8; margin-bottom: 1rem; text-align: center; }
+
+        .controls {
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .row { display: flex; gap: 1rem; align-items: center; }
+        label { font-size: 0.9rem; color: #94a3b8; min-width: 140px; }
+        input, select {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            background: #1e293b;
+            color: #f1f5f9;
+            font-size: 0.9rem;
+            flex: 1;
+        }
+        .btn {
+            padding: 0.6rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-print { background: #059669; color: white; }
+        .btn-print:hover { background: #047857; }
+        .btn-row { display: flex; gap: 1rem; justify-content: center; margin-top: 0.5rem; }
+
+        .preview {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            display: none;
+        }
+        .preview h2 {
+            font-size: 1rem;
+            color: #374151;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .barcode-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+        .barcode-card {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 0.75rem;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+        .barcode-card .type {
+            font-size: 0.7rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+        .barcode-card svg { max-width: 100%; }
+
+        @media print {
+            body { background: white; padding: 1rem; }
+            .controls, h1 { display: none; }
+            .preview {
+                display: block !important;
+                box-shadow: none;
+                padding: 0;
+            }
+            .barcode-card { border: 1px dashed #ccc; break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Generateur de codes-barres — Bons Cadeaux Coco Games</h1>
+
+    <div class="controls">
+        <div class="row">
+            <label>Type de bon :</label>
+            <select id="bon-type">
+                <option value="1H">Bon de 1H — 1 personne</option>
+                <option value="CHG">Bon de 1 chargeur</option>
+            </select>
+        </div>
+        <div class="row">
+            <label>Nombre de codes :</label>
+            <input type="number" id="count" value="4" min="1" max="50">
+        </div>
+        <div class="row">
+            <label>Prefixe (optionnel) :</label>
+            <input type="text" id="prefix" placeholder="ex: CG" value="CG">
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-primary" onclick="generate()">Generer</button>
+            <button class="btn btn-print" onclick="window.print()">Imprimer</button>
+        </div>
+    </div>
+
+    <div class="preview" id="preview">
+        <h2 id="preview-title"></h2>
+        <div class="barcode-grid" id="barcode-grid"></div>
+    </div>
+
+    <script>
+        function generateUniqueCode(prefix, type, index) {
+            const timestamp = Date.now().toString(36).toUpperCase();
+            const random = Math.random().toString(36).substring(2, 5).toUpperCase();
+            const num = String(index).padStart(3, '0');
+            return prefix + '-' + type + '-' + num + '-' + random;
+        }
+
+        function generate() {
+            const type = document.getElementById('bon-type').value;
+            const count = parseInt(document.getElementById('count').value) || 4;
+            const prefix = document.getElementById('prefix').value.trim() || 'CG';
+            const typeLabel = type === '1H' ? 'Bon de 1H — 1 personne' : 'Bon de 1 chargeur';
+
+            const preview = document.getElementById('preview');
+            const grid = document.getElementById('barcode-grid');
+            const title = document.getElementById('preview-title');
+
+            preview.style.display = 'block';
+            title.textContent = typeLabel + ' — ' + count + ' code(s)';
+            grid.textContent = '';
+
+            for (let i = 1; i <= count; i++) {
+                const code = generateUniqueCode(prefix, type, i);
+
+                const card = document.createElement('div');
+                card.className = 'barcode-card';
+
+                const typeDiv = document.createElement('div');
+                typeDiv.className = 'type';
+                typeDiv.textContent = typeLabel;
+                card.appendChild(typeDiv);
+
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.id = 'barcode-' + i;
+                card.appendChild(svg);
+
+                grid.appendChild(card);
+
+                JsBarcode(svg, code, {
+                    format: 'CODE128',
+                    width: 1.5,
+                    height: 60,
+                    displayValue: true,
+                    fontSize: 12,
+                    font: 'monospace',
+                    margin: 5,
+                    background: '#ffffff',
+                    lineColor: '#000000'
+                });
+            }
+        }
+
+        generate();
+    </script>
+</body>
+</html>
