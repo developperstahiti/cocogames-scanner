@@ -74,31 +74,34 @@
             display: block;
         }
 
-        /* Voucher = image + barcode area */
+        /* Voucher = image + barcode overlay */
         .voucher {
             position: relative;
             width: 200mm;
-            display: flex;
+            height: 63mm;
             page-break-inside: avoid;
+            overflow: hidden;
         }
         .voucher img {
-            flex: 1;
-            height: 63mm;
+            width: 100%;
+            height: 100%;
             object-fit: fill;
             display: block;
         }
 
-        /* Barcode encart to the right of the image */
+        /* Barcode encart overlaid on top-right of image */
         .barcode-encart {
-            width: 30mm;
-            height: 63mm;
+            position: absolute;
+            right: 2%;
+            top: 8%;
+            width: 12%;
+            height: 84%;
             border: 2.5px dashed #333;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: white;
-            flex-shrink: 0;
+            background: rgba(255,255,255,0.92);
         }
         .barcode-inner {
             transform: rotate(-90deg);
