@@ -55,56 +55,57 @@
             width: 210mm;
             margin: 1rem auto;
             background: white;
-            padding: 3mm 5mm;
+            padding: 0 5mm;
             display: flex;
             flex-direction: column;
             gap: 0;
         }
 
-        /* Zigzag separator between vouchers */
-        .zigzag {
+        /* Zigzag SVG separator */
+        .zigzag-wrap {
             width: 100%;
-            height: 6mm;
-            background:
-                linear-gradient(135deg, #1a7a3a 25%, transparent 25%) -5mm 0,
-                linear-gradient(225deg, #1a7a3a 25%, transparent 25%) -5mm 0,
-                linear-gradient(315deg, #1a7a3a 25%, transparent 25%),
-                linear-gradient(45deg, #1a7a3a 25%, transparent 25%);
-            background-size: 10mm 6mm;
-            background-color: #2d8f4e;
+            height: 7mm;
+            overflow: hidden;
+            line-height: 0;
+        }
+        .zigzag-wrap svg {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
 
         /* Voucher = image + barcode overlay */
         .voucher {
             position: relative;
             width: 200mm;
-            /* ratio 2000:700 = 2.857:1 */
             height: 70mm;
             page-break-inside: avoid;
-            overflow: hidden;
         }
         .voucher img {
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            object-fit: fill;
             display: block;
         }
 
-        /* Barcode positioned over the dashed encart area */
+        /* Barcode overlay — fills the dashed encart */
         .barcode-overlay {
             position: absolute;
-            /* Center of the encart */
-            right: 1%;
-            top: 50%;
-            width: 14%;
-            height: 0;
+            right: 0.5%;
+            top: 5%;
+            width: 15%;
+            height: 90%;
             display: flex;
             align-items: center;
             justify-content: center;
-            /* Rotate the whole container */
-            transform: translateY(-50%) rotate(-90deg);
+            overflow: hidden;
         }
-        .barcode-overlay svg {
+        .barcode-inner {
+            transform: rotate(-90deg);
+            transform-origin: center center;
+            white-space: nowrap;
+        }
+        .barcode-inner svg {
             display: block;
         }
 
@@ -113,7 +114,7 @@
             .controls, h1, .subtitle { display: none !important; }
             .page {
                 margin: 0 auto;
-                padding: 2mm 5mm;
+                padding: 0 5mm;
                 box-shadow: none;
                 border-radius: 0;
                 page-break-after: always;
@@ -163,6 +164,64 @@
             return prefix + '-' + type + '-' + num + '-' + random;
         }
 
+        function createZigzag() {
+            var wrap = document.createElement('div');
+            wrap.className = 'zigzag-wrap';
+            // SVG zigzag pattern
+            var svgNS = 'http://www.w3.org/2000/svg';
+            var svg = document.createElementNS(svgNS, 'svg');
+            svg.setAttribute('viewBox', '0 0 800 30');
+            svg.setAttribute('preserveAspectRatio', 'none');
+
+            // Top zigzag
+            var points1 = '';
+            for (var x = 0; x <= 800; x += 20) {
+                var y = (x % 40 === 0) ? 0 : 10;
+                points1 += x + ',' + y + ' ';
+            }
+            points1 += '800,0 0,0';
+            var poly1 = document.createElementNS(svgNS, 'polygon');
+            poly1.setAttribute('points', points1);
+            poly1.setAttribute('fill', '#1a7a3a');
+            svg.appendChild(poly1);
+
+            // Middle band
+            var rect = document.createElementNS(svgNS, 'rect');
+            rect.setAttribute('x', '0');
+            rect.setAttribute('y', '8');
+            rect.setAttribute('width', '800');
+            rect.setAttribute('height', '14');
+            rect.setAttribute('fill', '#1a7a3a');
+            svg.appendChild(rect);
+
+            // Lighter inner stripes
+            for (var sx = 0; sx < 800; sx += 40) {
+                var stripe = document.createElementNS(svgNS, 'rect');
+                stripe.setAttribute('x', String(sx + 5));
+                stripe.setAttribute('y', '10');
+                stripe.setAttribute('width', '15');
+                stripe.setAttribute('height', '10');
+                stripe.setAttribute('fill', '#2d8f4e');
+                stripe.setAttribute('transform', 'rotate(-45 ' + (sx + 12) + ' 15)');
+                svg.appendChild(stripe);
+            }
+
+            // Bottom zigzag
+            var points2 = '';
+            for (var x2 = 0; x2 <= 800; x2 += 20) {
+                var y2 = (x2 % 40 === 0) ? 30 : 20;
+                points2 += x2 + ',' + y2 + ' ';
+            }
+            points2 += '800,30 0,30';
+            var poly2 = document.createElementNS(svgNS, 'polygon');
+            poly2.setAttribute('points', points2);
+            poly2.setAttribute('fill', '#1a7a3a');
+            svg.appendChild(poly2);
+
+            wrap.appendChild(svg);
+            return wrap;
+        }
+
         function createVoucher(type, code) {
             var voucher = document.createElement('div');
             voucher.className = 'voucher';
@@ -174,16 +233,21 @@
 
             var overlay = document.createElement('div');
             overlay.className = 'barcode-overlay';
+
+            var inner = document.createElement('div');
+            inner.className = 'barcode-inner';
+
             var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            overlay.appendChild(svg);
+            inner.appendChild(svg);
+            overlay.appendChild(inner);
             voucher.appendChild(overlay);
 
             JsBarcode(svg, code, {
                 format: 'CODE128',
-                width: 3,
-                height: 120,
+                width: 2.5,
+                height: 100,
                 displayValue: true,
-                fontSize: 18,
+                fontSize: 16,
                 font: 'monospace',
                 margin: 5,
                 background: 'transparent',
@@ -207,22 +271,15 @@
                 var page = document.createElement('div');
                 page.className = 'page';
 
+                page.appendChild(createZigzag());
+
                 var start = p * perPage;
                 var end = Math.min(start + perPage, count);
-
-                // First zigzag at top
-                var topZig = document.createElement('div');
-                topZig.className = 'zigzag';
-                page.appendChild(topZig);
 
                 for (var i = start; i < end; i++) {
                     var code = generateCode(prefix, type, i + 1);
                     page.appendChild(createVoucher(type, code));
-
-                    // Zigzag after each voucher
-                    var zig = document.createElement('div');
-                    zig.className = 'zigzag';
-                    page.appendChild(zig);
+                    page.appendChild(createZigzag());
                 }
                 container.appendChild(page);
             }
