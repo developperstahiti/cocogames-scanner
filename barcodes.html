@@ -74,44 +74,38 @@
             display: block;
         }
 
-        /* Voucher = image + barcode overlay */
+        /* Voucher = image + barcode area */
         .voucher {
             position: relative;
             width: 200mm;
-            height: 70mm;
+            display: flex;
             page-break-inside: avoid;
         }
         .voucher img {
-            width: 100%;
-            height: 100%;
+            flex: 1;
+            height: 63mm;
             object-fit: fill;
             display: block;
         }
 
-        /* Barcode overlay — fits inside the dashed encart */
-        .barcode-overlay {
-            position: absolute;
-            right: 1.2%;
-            top: 8%;
-            width: 13.5%;
-            height: 84%;
+        /* Barcode encart to the right of the image */
+        .barcode-encart {
+            width: 30mm;
+            height: 63mm;
+            border: 2.5px dashed #333;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            background: white;
+            flex-shrink: 0;
         }
         .barcode-inner {
             transform: rotate(-90deg);
             transform-origin: center center;
-            width: 55mm;
-            height: 20mm;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         .barcode-inner svg {
             display: block;
-            max-height: 20mm;
         }
 
         @media print {
@@ -236,16 +230,16 @@
             img.alt = 'Bon cadeau Coco Games';
             voucher.appendChild(img);
 
-            var overlay = document.createElement('div');
-            overlay.className = 'barcode-overlay';
+            var encart = document.createElement('div');
+            encart.className = 'barcode-encart';
 
             var inner = document.createElement('div');
             inner.className = 'barcode-inner';
 
             var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             inner.appendChild(svg);
-            overlay.appendChild(inner);
-            voucher.appendChild(overlay);
+            encart.appendChild(inner);
+            voucher.appendChild(encart);
 
             JsBarcode(svg, code, {
                 format: 'CODE128',
