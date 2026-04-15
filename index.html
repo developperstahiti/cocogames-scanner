@@ -146,6 +146,10 @@
 
         function getTicketType(code) {
             if (code.includes('-1H-')) return 'Bon de 1H \u2014 1 personne';
+            if (code.includes('-2H-')) return 'Bon de 2H \u2014 1 personne';
+            if (code.includes('-6H-')) return 'Bon de 6H \u2014 1 personne';
+            if (code.includes('-12H-')) return 'Bon de 12H \u2014 1 personne';
+            if (code.includes('-DAY-')) return 'Day Pass \u2014 1 personne';
             if (code.includes('-CHG-')) return 'Bon de 1 chargeur';
             return 'Ticket';
         }
