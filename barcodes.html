@@ -204,6 +204,7 @@
             <a href="index.html" class="btn btn-back">Retour au scanner</a>
             <button class="btn btn-primary" onclick="generate()">Generer les bons</button>
             <button class="btn btn-print" onclick="window.print()">Imprimer</button>
+            <button class="btn btn-print label-only" style="display:none;background:#7c3aed" onclick="downloadLabelsPng()">Telecharger PNG (Labelife)</button>
         </div>
     </div>
 
@@ -331,8 +332,74 @@
             var mode = document.getElementById('mode').value;
             var labelRows = document.querySelectorAll('.label-only');
             for (var i = 0; i < labelRows.length; i++) {
-                labelRows[i].style.display = (mode === 'labels') ? 'flex' : 'none';
+                var isBtn = labelRows[i].tagName === 'BUTTON';
+                labelRows[i].style.display = (mode === 'labels') ? (isBtn ? 'inline-block' : 'flex') : 'none';
             }
+        }
+
+        function downloadLabelsPng() {
+            var labels = document.querySelectorAll('#pages .label');
+            if (!labels.length) { alert('Generez d\'abord les etiquettes.'); return; }
+
+            var wMm = parseInt(document.getElementById('label-w').value) || 50;
+            var hMm = parseInt(document.getElementById('label-h').value) || 30;
+            // 300 DPI : 1 mm = 11.811 px
+            var dpi = 300;
+            var pxPerMm = dpi / 25.4;
+            var pxW = Math.round(wMm * pxPerMm);
+            var pxH = Math.round(hMm * pxPerMm);
+
+            var done = 0;
+            labels.forEach(function(labelEl, idx) {
+                var svgEl = labelEl.querySelector('svg');
+                var title = labelEl.querySelector('.label-title').textContent;
+                var barcodeText = svgEl.querySelector('text') ? svgEl.querySelector('text').textContent : ('label-' + (idx + 1));
+
+                // Canvas blanc
+                var canvas = document.createElement('canvas');
+                canvas.width = pxW;
+                canvas.height = pxH;
+                var ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, pxW, pxH);
+
+                // Titre
+                ctx.fillStyle = '#000000';
+                ctx.font = 'bold ' + Math.round(3.2 * pxPerMm) + 'px Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                var titleY = Math.round(1 * pxPerMm);
+                ctx.fillText(title, pxW / 2, titleY);
+
+                // Serialiser SVG du code-barres
+                var svgClone = svgEl.cloneNode(true);
+                svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                var svgStr = new XMLSerializer().serializeToString(svgClone);
+                var svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+                var url = URL.createObjectURL(svgBlob);
+
+                var img = new Image();
+                img.onload = function() {
+                    var barcodeTop = titleY + Math.round(4 * pxPerMm);
+                    var barcodeAvailH = pxH - barcodeTop - Math.round(1 * pxPerMm);
+                    var barcodeW = Math.round(pxW * 0.92);
+                    var barcodeX = Math.round((pxW - barcodeW) / 2);
+                    ctx.drawImage(img, barcodeX, barcodeTop, barcodeW, barcodeAvailH);
+                    URL.revokeObjectURL(url);
+
+                    canvas.toBlob(function(blob) {
+                        var a = document.createElement('a');
+                        a.href = URL.createObjectURL(blob);
+                        a.download = barcodeText + '.png';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        setTimeout(function() { URL.revokeObjectURL(a.href); }, 1000);
+                        done++;
+                    }, 'image/png');
+                };
+                img.src = url;
+            });
         }
 
         function createLabel(code, widthMm, heightMm, title) {
