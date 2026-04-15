@@ -173,10 +173,10 @@
             <label>Type de bon :</label>
             <select id="bon-type">
                 <option value="1H">Bon de 1H — 1 personne</option>
-                <option value="2H">Bon de 2H — 1 personne</option>
-                <option value="6H">Bon de 6H — 1 personne</option>
-                <option value="12H">Bon de 12H — 1 personne</option>
-                <option value="DAY">Day Pass — 1 personne</option>
+                <option value="2H" data-labels-only>Bon de 2H — 1 personne</option>
+                <option value="6H" data-labels-only>Bon de 6H — 1 personne</option>
+                <option value="12H" data-labels-only>Bon de 12H — 1 personne</option>
+                <option value="DAY" data-labels-only>Day Pass — 1 personne</option>
                 <option value="CHG">Bon de 1 chargeur</option>
             </select>
         </div>
@@ -334,6 +334,15 @@
             for (var i = 0; i < labelRows.length; i++) {
                 var isBtn = labelRows[i].tagName === 'BUTTON';
                 labelRows[i].style.display = (mode === 'labels') ? (isBtn ? 'inline-block' : 'flex') : 'none';
+            }
+            var typeSelect = document.getElementById('bon-type');
+            var opts = typeSelect.querySelectorAll('option[data-labels-only]');
+            for (var j = 0; j < opts.length; j++) {
+                opts[j].hidden = (mode !== 'labels');
+                opts[j].disabled = (mode !== 'labels');
+            }
+            if (mode !== 'labels' && typeSelect.selectedOptions[0] && typeSelect.selectedOptions[0].hasAttribute('data-labels-only')) {
+                typeSelect.value = '1H';
             }
         }
 
